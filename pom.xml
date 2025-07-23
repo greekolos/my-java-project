@@ -11,6 +11,8 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <maven.compiler.release>17</maven.compiler.release>
+        <!-- переменная по умолчанию пустая, можно переопределять при запуске -->
+        <test.tags></test.tags>
     </properties>
 
     <dependencies>
@@ -43,6 +45,15 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.0.0</version>
+                <configuration>
+                    <properties>
+                        <!-- Передаём теги для фильтрации тестов -->
+                        <property>
+                            <name>junit.jupiter.include.tags</name>
+                            <value>${test.tags}</value>
+                        </property>
+                    </properties>
+                </configuration>
             </plugin>
         </plugins>
     </build>
