@@ -3,6 +3,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
                              http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
     <groupId>com.example</groupId>
     <artifactId>ui-tests</artifactId>
     <version>1.0-SNAPSHOT</version>
@@ -11,7 +12,6 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <maven.compiler.release>17</maven.compiler.release>
-        <!-- переменная по умолчанию пустая, можно переопределять при запуске -->
         <test.tags></test.tags>
     </properties>
 
@@ -46,11 +46,13 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.0.0</version>
                 <configuration>
+                    <useFile>false</useFile> <!-- Показывать логи тестов в консоли -->
+                    <printSummary>true</printSummary> <!-- Печатать итог по каждому тесту -->
+                    <reportFormat>brief</reportFormat> <!-- Формат вывода -->
                     <properties>
-                        <!-- Передаём теги для фильтрации тестов -->
                         <property>
                             <name>junit.jupiter.include.tags</name>
-                            <value>${test.tags}</value>
+                            <value>${test.tags}</value> <!-- Фильтрация по тегам -->
                         </property>
                     </properties>
                 </configuration>
