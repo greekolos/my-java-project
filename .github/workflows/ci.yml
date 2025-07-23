@@ -31,6 +31,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Show test files
+        run: |
+          echo "📂 Список файлов в src/test/java:"
+          find src/test/java || echo "Папка src/test/java не найдена"
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -60,22 +65,32 @@ jobs:
         if: ${{ github.event.inputs.run_mode == 'changed' && steps.detect.outputs.test_classes != '' }}
         run: |
           echo "✅ Запуск изменённых тестов: ${{ steps.detect.outputs.test_classes }}"
-          mvn test -Dtest="${{ steps.detect.outputs.test_classes }}"
+          mvn test -Dtest="${{ steps.detect.outputs.test_classes }}" -X
 
       - name: Run all tests
         if: ${{ github.event.inputs.run_mode == 'all' }}
         run: |
           echo "🧪 Запуск всех тестов"
-          mvn test
+          mvn test -X
 
       - name: Run custom test
         if: ${{ github.event.inputs.run_mode == 'custom' && github.event.inputs.test_class != '' }}
         run: |
           echo "⚙️ Запуск указанного теста: ${{ github.event.inputs.test_class }}"
-          mvn test -Dtest="${{ github.event.inputs.test_class }}"
+          mvn test -Dtest="${{ github.event.inputs.test_class }}" -X
 
       - name: Run tests by tag
         if: ${{ github.event.inputs.run_mode == 'tag' && github.event.inputs.tag != '' }}
         run: |
           echo "🏷️ Запуск тестов с тегом: ${{ github.event.inputs.tag }}"
-          mvn test -Dgroups=${{ github.event.inputs.tag }}
+          mvn test -Dgroups="${{ github.event.inputs.tag }}" -X
+
+      - name: Show surefire reports folder content
+        run: |
+          echo "📄 Содержимое target/surefire-reports:"
+          ls -la target/surefire-reports || echo "Папка с отчетами не найдена"
+
+      - name: Show surefire reports content
+        run: |
+          echo "📑 Содержимое отчетов surefire:"
+          cat target/surefire-reports/*.txt || echo "Отчеты не найдены"
