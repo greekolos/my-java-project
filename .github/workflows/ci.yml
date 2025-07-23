@@ -1,14 +1,32 @@
-name: Java CI
+name: Java Selective Test Runner
 
 on:
+  workflow_dispatch:
+    inputs:
+      run_mode:
+        description: 'Режим запуска (changed, all, custom, tag)'
+        required: true
+        default: 'changed'
+        type: choice
+        options:
+          - changed
+          - all
+          - custom
+          - tag
+      test_class:
+        description: 'Имя тестового класса (например: q1, stop)'
+        required: false
+      tag:
+        description: 'JUnit тег (например: login, critical)'
+        required: false
+
   push:
-    branches: [ "master" ]
-  pull_request:
     branches: [ "master" ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -19,5 +37,45 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Build with Maven
-        run: mvn clean install
+      - name: Detect changed test classes
+        id: detect
+        if: ${{ github.event.inputs.run_mode == 'changed' || github.event_name == 'push' }}
+        run: |
+          git fetch origin master
+          changed=$(git diff --name-only origin/master...HEAD | grep '^src/test/java/org/example/.*\.java$' || true)
+
+          echo "Изменённые файлы:"
+          echo "$changed"
+
+          test_classes=""
+          for file in $changed; do
+            classname=$(basename "$file" .java)
+            test_classes+="$classname,"
+          done
+
+          test_classes="${test_classes%,}"  # удалить последнюю запятую
+          echo "test_classes=$test_classes" >> $GITHUB_OUTPUT
+
+      - name: Run changed tests
+        if: ${{ github.event.inputs.run_mode == 'changed' && steps.detect.outputs.test_classes != '' }}
+        run: |
+          echo "✅ Запуск изменённых тестов: ${{ steps.detect.outputs.test_classes }}"
+          mvn test -Dtest="${{ steps.detect.outputs.test_classes }}"
+
+      - name: Run all tests
+        if: ${{ github.event.inputs.run_mode == 'all' }}
+        run: |
+          echo "🧪 Запуск всех тестов"
+          mvn test
+
+      - name: Run custom test
+        if: ${{ github.event.inputs.run_mode == 'custom' && github.event.inputs.test_class != '' }}
+        run: |
+          echo "⚙️ Запуск указанного теста: ${{ github.event.inputs.test_class }}"
+          mvn test -Dtest="${{ github.event.inputs.test_class }}"
+
+      - name: Run tests by tag
+        if: ${{ github.event.inputs.run_mode == 'tag' && github.event.inputs.tag != '' }}
+        run: |
+          echo "🏷️ Запуск тестов с тегом: ${{ github.event.inputs.tag }}"
+          mvn test -Dgroups=${{ github.event.inputs.tag }}
